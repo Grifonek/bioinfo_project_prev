@@ -8,3 +8,5 @@ tmp/
 .vscode/
 .DS_Store
 .venv/
+
+test.py

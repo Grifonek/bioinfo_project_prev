@@ -1,26 +1,36 @@
+from pathlib import Path
+
 from moleculekit.molecule import Molecule
 from moleculekit.tools.preparation import systemPrepare
 
-
-def load_and_hydrate_protein(path: str, pH: float):
+class ProteinService:
     """
-    Function for loading and adding hydrogens to protein given by path to PDB file.
-    Achieved with moleculekit.
+    Service responsible for loading and adding hydrogens to proteins using moleculekit.
     """
 
-    print("---- Loading protein... ----")
+    def __init__(self, output_dir: str = "./tmp") -> None:
+        self.output_dir =Path(output_dir)
+    
+    def load_and_hydrate(self, path: str, pH: float = 7.0) -> Path:
+        """
+        Function for loading and adding hydrogens to protein given by path to PDB file.
+        Achieved with moleculekit.
+        """
 
-    # loading protein
-    protein = Molecule(path)
+        print("---- [protein] Loading protein... ----")
 
-    print("---- Adding hydrogens to protein (pH 7)... ----")
+        # loading protein
+        protein = Molecule(path)
 
-    # adding hydrogens
-    protein_prepped, report = systemPrepare(
-        protein, return_details=True, pH=pH)
+        print(f"---- [protein] Adding hydrogens to protein (pH {pH})... ----")
 
-    # creating output PDB file
-    protein_prepped.write("./tmp/protein_prepared.pdb")
+        # adding hydrogens
+        protein_prepped, report = systemPrepare(
+            protein, return_details=True, pH=pH)
 
-    print("---- Protein saved to ./tmp/protein_prepared.pdb ----")
-    return
+        # creating output PDB file
+        out_pdb = self.output_dir / "protein_prepared.pdb"
+        protein_prepped.write(str(out_pdb))
+
+        print(f"---- [protein] Protein saved to {out_pdb} ----")
+        return out_pdb

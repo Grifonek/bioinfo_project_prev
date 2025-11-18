@@ -1,26 +1,37 @@
 import os
+from pathlib import Path
 
-from services.protein_services import load_and_hydrate_protein
-from services.protonation_services import protonate_with_dimorphite
-from services.hydride_services import prepare_ligand_from_protonated_rdkit_mol
+from services.protein_services import ProteinService
+from services.protonation_services import ProtonationService
+from services.hydride_services import HydrideService
 
+class MainRunner:
+    def __init__(self, output_dir: str = "./tmp") -> None:
+        self.output_dir = Path(output_dir)
+        self.protein_services = ProteinService(output_dir=str(self.output_dir))
+        self.protonation_services = ProtonationService()
+        self.hydride_services = HydrideService(output_path=str(self.output_dir / "ligand_ph7_h_hydride.pdb"))
+    
+    def run(self, protein_path: str, ligand_path: str, pH: float = 7.0, pH_min: float = 6.8, pH_max: float = 7.9) -> None:
+        # making sure that ./tmp dir exists
+        os.makedirs("./tmp", exist_ok=True)
 
-def main():
-    os.makedirs("./tmp", exist_ok=True)
+        # 1) loading and hydrating protein
+        self.protein_services.load_and_hydrate(protein_path, pH=pH)
 
-    # 1) loading and hydrating protein
-    load_and_hydrate_protein(path="./PDBs/AF-L8BU87-F1-model_v6.pdb", pH=7.0)
+        # 2) protonating ligand molecule
+        protonated_mol = self.protonation_services.protonate_with_dimorphite(ligand_path, pH_min=pH_min, pH_max=pH_max)
+        print(protonated_mol)
 
-    # 2) protonating ligand molecule
-    protonated_mol = protonate_with_dimorphite(
-        path="./PDBs/BUA.pdb", pH_min=7.0, pH_max=7.0)
-
-    # 3) adding hydrogens to ligand molecule
-    prepare_ligand_from_protonated_rdkit_mol(protonated_mol)
-
-    print("Completed successfully. Output saved in ./tmp")
-    return
-
+        # 3) adding hydrogens to ligand molecule
+        self.hydride_services.add_hs_with_hydride(protonated_mol)
 
 if __name__ == "__main__":
-    main()
+    runner = MainRunner(output_dir="./tmp")
+    runner.run(
+        protein_path="./PDBs/AF-L8BU87-F1-model_v6.pdb",
+        ligand_path="./PDBs/PPI_ideal.sdf",
+        pH=7.0,
+        pH_min=6.8,
+        pH_max=7.9
+    )

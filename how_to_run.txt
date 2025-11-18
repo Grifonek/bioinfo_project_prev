@@ -1,0 +1,9 @@
+# activating .venv
+- on Linux: source .venv/bin/activate
+- on Win: .venv\Scripts\activate
+
+# OPTIONAL
+Ctrl+Shift+P - Python: Select interpreter - .venv
+
+# closing .venv
+deactivate
